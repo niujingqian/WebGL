@@ -1,7 +1,7 @@
 ﻿<html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>OgreControl发布页</title>
+    <title>WebGL</title>
     <link rel="stylesheet" type="text/css" href="jquery-easyui-1.4.4/themes/default/easyui.css">
     <link rel="stylesheet" type="text/css" href="jquery-easyui-1.4.4/themes/black/easyui.css">
     <link rel="stylesheet" type="text/css" href="jquery-easyui-1.4.4/themes/icon.css">
@@ -10,9 +10,28 @@
     <link rel="stylesheet" href="CodeMirror/theme/monokai.css">
     <script src="CodeMirror/lib/codemirror.js"></script>
     <script src="CodeMirror/mode/javascript.js"></script>
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
     <script type="text/javascript" src="jquery-easyui-1.4.4/jquery.min.js"></script>
     <script type="text/javascript" src="jquery-easyui-1.4.4/jquery.easyui.min.js"></script>
     <script type="text/javascript" src="jquery-easyui-1.4.4/locale/easyui-lang-zh_CN.js"></script>
+
+	<script id="shader-fs" type="x-shader/x-fragment">
+     precision mediump float;
+        void main(void) {
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        }
+	</script>
+	<script id="shader-vs" type="x-shader/x-vertex">
+     attribute vec3 aVertexPosition;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    }
+	</script>
+
     <script type="text/javascript">
         var myCodeMirror;
         $(document).ready(function () {
@@ -31,8 +50,8 @@
                 data:
                 [
 	                {
-	                	key:'first',
-	                	value:'WebGL/first.js'
+	                	key:'三角形和矩形',
+	                	value:'WebGL/三角形和矩形.js'
 	                },
 	                {
 	                	key:'second',
@@ -43,6 +62,7 @@
                 onSelect: function (result) {
                     $.getScript(result.value, function (data) {
                         myCodeMirror.setValue(data);
+                        addErrorInformation("信息：执行成功");
                     })
                 }
             });
@@ -52,25 +72,12 @@
             document.getElementById("errorInformation").value = "";
         }
 
-        function clearExecutedText() {
-            document.getElementById("executedText").value = "";
-        }
-
-        function updateErrorInformation() {
+        function addErrorInformation(errorInformation) {
             var currentErrorInformation = document.getElementById("errorInformation").value;
-            var tab = $('#WebGLTabs').tabs('getSelected');
-            if (tab) {
-            	var title = tab.panel('options').title;
-            }
-            else{
-				currentErrorInformation = "没有Canvas";
-            }
-        	if (currentErrorInformation == "") {
-                document.getElementById("errorInformation").value = "信息：执行成功";
-            }
-            else {
-                document.getElementById("errorInformation").value = currentErrorInformation + "\n信息：执行成功";
-            }
+            if(currentErrorInformation == "")
+                document.getElementById("errorInformation").value =  errorInformation;
+            else
+                document.getElementById("errorInformation").value = currentErrorInformation + "\n"+errorInformation;
         }
 
         var webGLIndex = 4;
@@ -79,7 +86,7 @@
             var tabTitle = 'WebGL' + webGLIndex;
             $('#WebGLTabs').tabs('add', {
                 title: tabTitle,
-                content: '<canvas id="WebGL"'+ webGLIndex + 'style="width:100%; height: 100%;overflow: hidden; background-color: #272822;border:0px;padding:0px;margin:0px;"></canvas>',
+                content: '<div title="WebGL'+webGLIndex+'" data-options="closable:true" style="width: 100%; height: 100%; overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px;"><canvas id="WebGL'+ webGLIndex + '" style="width:100%; height: 100%;overflow: hidden; background-color: #272822;border:0px;padding:0px;margin:0px;"></canvas></div>',
                 closable: true
             });
         }
@@ -111,36 +118,22 @@
                 if (executingText == "")
                     return;
                 eval(executingText);
-
-                var executedText = document.getElementById("executedText").value;
-                if (executedText != "")
-                    document.getElementById("executedText").value = executedText + "\n" + executingText;
-                else
-                    document.getElementById("executedText").value = executingText;
-
-                updateErrorInformation();
+                addErrorInformation("信息：执行成功");
             }
             catch (error) {
-                var currentErrorInformation = document.getElementById("errorInformation").value;
-                document.getElementById("errorInformation").value = currentErrorInformation + "\n" +
+                var errorInformation = 
                     "错误名称：" + error.name + "\n" +
                     "错误消息：" + error.message + "\n" +
                     "错误描述：" + error.name + "\n" +
                     "错误堆栈：" + error.stack;
+                addErrorInformation(errorInformation);
             }
         }
     </script>
 </head>
 <body class="easyui-layout" style="background-color:black; width:100%;height:100%;border:0px;padding:0px;margin:0px;">
-    <div data-options="region:'east',split:true" style="overflow: hidden;width: 25%;height:100%; border: 0px; padding: 0px; margin: 0px;">
-        <div class="easyui-layout" data-options="" style="width:100%;height:100%; border: 0px; padding: 0px; margin: 0px;">
-            <div data-options="region:'north',split:true,tools:[{iconCls:'icon-clear001',handler:function(){clearExecutedText();}}]" title="已经执行的代码" style="height: 15%;width:100%; border: 0px; padding: 0px; margin: 0px;">
-                <textarea id="executedText" readonly="readonly" style="overflow: auto; background-color: #272822; color: white; width: 100%; height: 100%; border: 0px;padding:0px;margin:0px;"></textarea>
-            </div>
-            <div id="excutingCode" data-options="region:'center',tools:'#excutingCodeTool'" title="要执行的代码" style="width:100%;height:85%; border: 0px; padding: 0px; margin: 0px;">
-                <textarea id="executingText" style="width:100%;height:100%; background-color: #272822; border: 0px; padding: 0px; margin: 0px; "></textarea>
-            </div>
-        </div>
+    <div data-options="region:'east',split:true,tools:'#excutingCodeTool'" title="要执行的代码" style="overflow: hidden;width: 30%;height:100%; border: 0px; padding: 0px; margin: 0px;">
+        <textarea id="executingText" style="width:100%;height:100%; background-color: #272822; border: 0px; padding: 0px; margin: 0px; "></textarea>
     </div>
     <div data-options="region:'center'" style="width:75%;height:100%; overflow: hidden; border: 0px; padding: 0px; margin: 0px;">
         <div class="easyui-layout" data-options="" style="width:100%;height:100%;overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px;">
