@@ -11,19 +11,8 @@ function initGL(canvas) {
     }
 }
 
-function getVertexShader(gl, id) {
-    var shaderScript = document.getElementById(id);
-    if (!shaderScript) {
-        return null;
-    }
-    var str = "";
-    var k = shaderScript.firstChild;
-    while (k) {
-        if (k.nodeType == 3) {
-            str += k.textContent;
-        }
-        k = k.nextSibling;
-    }
+function getVertexShader(gl) {
+    var str = myVertexShaderTextArea.getValue();
     var shader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(shader, str);
     gl.compileShader(shader);
@@ -35,19 +24,8 @@ function getVertexShader(gl, id) {
     return shader;
 }
 
-function getFragmentShader(gl, id) {
-    var shaderScript = document.getElementById(id);
-    if (!shaderScript) {
-        return null;
-    }
-    var str = "";
-    var k = shaderScript.firstChild;
-    while (k) {
-        if (k.nodeType == 3) {
-            str += k.textContent;
-        }
-        k = k.nextSibling;
-    }
+function getFragmentShader(gl) {
+    var str = myFragmentShaderTextArea.getValue();
     var shader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(shader, str);
     gl.compileShader(shader);
@@ -62,8 +40,8 @@ function getFragmentShader(gl, id) {
 var shaderProgram;
 
 function initShaders() {
-    var fragmentShader = getFragmentShader(gl, "shader-fs");
-    var vertexShader = getVertexShader(gl, "shader-vs");
+    var fragmentShader = getFragmentShader(gl);
+    var vertexShader = getVertexShader(gl);
 
     shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertexShader);
@@ -147,17 +125,8 @@ function drawScene() {
 
 
 
-function webGLStart() {
-	var tab = $('#WebGLTabs').tabs('getSelected');
-	var title;
-    if (tab) {
-    	title = tab.panel('options').title;
-    }
-    else{
-		addErrorInformation("没有Canvas");
-		return;
-    }
-    var canvas = document.getElementById(title);
+function main() {
+    var canvas = document.getElementById('WebGL');
     initGL(canvas);
     initShaders();
     initBuffers();
@@ -168,4 +137,4 @@ function webGLStart() {
     drawScene();
 }
 
-webGLStart();
+main();
