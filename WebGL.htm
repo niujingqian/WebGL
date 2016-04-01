@@ -14,34 +14,34 @@
     <script type="text/javascript" src="jquery-easyui-1.4.4/jquery.min.js"></script>
     <script type="text/javascript" src="jquery-easyui-1.4.4/jquery.easyui.min.js"></script>
     <script type="text/javascript" src="jquery-easyui-1.4.4/locale/easyui-lang-zh_CN.js"></script>
-
-	<script id="shader-fs" type="x-shader/x-fragment">
-     precision mediump float;
-        void main(void) {
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-        }
-	</script>
-	<script id="shader-vs" type="x-shader/x-vertex">
-     attribute vec3 aVertexPosition;
-
-    uniform mat4 uMVMatrix;
-    uniform mat4 uPMatrix;
-
-    void main(void) {
-        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-    }
-	</script>
-
     <script type="text/javascript">
-        var myCodeMirror;
+        var myExecutingCodeTextArea;
+        var myVertexShaderTextArea;
+        var myFragmentShaderTextArea;
         $(document).ready(function () {
-            myCodeMirror = CodeMirror.fromTextArea(executingText, {
+            myExecutingCodeTextArea = CodeMirror.fromTextArea(executingCodeTextArea, {
                 lineNumbers: true,
                 mode: "javascript",
                 theme: "monokai",
                 indentUnit: 4
             });
-            myCodeMirror.setSize("100%", "100%");
+            myExecutingCodeTextArea.setSize("100%", "100%");
+
+            myVertexShaderTextArea = CodeMirror.fromTextArea(vertexShaderTextArea, {
+                lineNumbers: true,
+                mode: "c",
+                theme: "monokai",
+                indentUnit: 4
+            });
+            myVertexShaderTextArea.setSize("100%", "50%");
+
+            myFragmentShaderTextArea = CodeMirror.fromTextArea(fragmentShaderTextArea, {
+                lineNumbers: true,
+                mode: "c",
+                theme: "monokai",
+                indentUnit: 4
+            });
+            myFragmentShaderTextArea.setSize("100%", "50%");
 
             $('#cc').combobox({
                 valueField: 'value',
@@ -51,19 +51,29 @@
                 [
 	                {
 	                	key:'三角形和矩形',
-	                	value:'WebGL/三角形和矩形.js'
-	                },
-	                {
-	                	key:'second',
-	                	value:'WebGL/second.js'
+	                	value:'三角形和矩形'
 	                }
                 ],
                 editable: false,
                 onSelect: function (result) {
-                    $.getScript(result.value, function (data) {
-                        myCodeMirror.setValue(data);
-                        addErrorInformation("信息：执行成功");
-                    })
+                	try{
+                		$.get("WebGL/"+result.value+"_vs.glsl",function(data){
+                			myVertexShaderTextArea.setValue(data);
+                		});
+                		$.get("WebGL/"+result.value+"_fs.glsl",function(data){
+                			myFragmentShaderTextArea.setValue(data);
+                		});
+                	}catch(error){
+                		var errorInformation = 
+	                    "错误名称：" + error.name + "\n" +
+	                    "错误消息：" + error.message + "\n" +
+	                    "错误描述：" + error.name + "\n" +
+	                    "错误堆栈：" + error.stack;
+	                	addErrorInformation(errorInformation);
+                	}
+                	$.get("WebGL/"+result.value+".js", function (data3) {
+                        myExecutingCodeTextArea.setValue(data3);
+                    });
                 }
             });
         });
@@ -80,39 +90,13 @@
                 document.getElementById("errorInformation").value = currentErrorInformation + "\n"+errorInformation;
         }
 
-        var webGLIndex = 4;
-        function addWebGL() {
-            webGLIndex++;
-            var tabTitle = 'WebGL' + webGLIndex;
-            $('#WebGLTabs').tabs('add', {
-                title: tabTitle,
-                content: '<div title="WebGL'+webGLIndex+'" data-options="closable:true" style="width: 100%; height: 100%; overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px;"><canvas id="WebGL'+ webGLIndex + '" style="width:100%; height: 100%;overflow: hidden; background-color: #272822;border:0px;padding:0px;margin:0px;"></canvas></div>',
-                closable: true
-            });
-        }
-
-        function deleteAllWebGLs() {
-            webGLIndex = 0;
-            var arrTitle = new Array();
-            var tabs = $('#WebGLTabs').tabs("tabs");
-            var tCount = tabs.length;
-            if (tCount > 0) {
-                for (var i = 0; i < tCount; i++) {
-                    arrTitle.push(tabs[i].panel('options').title)
-                }
-                for (var i = 0; i < arrTitle.length; i++) {
-                    $('#WebGLTabs').tabs("close", arrTitle[i]);
-                }
-            }
-        }
-
         function executeText() {
             var executingText;
-            if (myCodeMirror.getSelection() == "") {
-                executingText = myCodeMirror.getValue();
+            if (myExecutingCodeTextArea.getSelection() == "") {
+                executingText = myExecutingCodeTextArea.getValue();
             }
             else {
-                executingText = myCodeMirror.getSelection();
+                executingText = myExecutingCodeTextArea.getSelection();
             }
             try {
                 if (executingText == "")
@@ -132,44 +116,31 @@
     </script>
 </head>
 <body class="easyui-layout" style="background-color:black; width:100%;height:100%;border:0px;padding:0px;margin:0px;">
-    <div data-options="region:'east',split:true,tools:'#excutingCodeTool'" title="要执行的代码" style="overflow: hidden;width: 30%;height:100%; border: 0px; padding: 0px; margin: 0px;">
-        <textarea id="executingText" style="width:100%;height:100%; background-color: #272822; border: 0px; padding: 0px; margin: 0px; "></textarea>
+    <div data-options="region:'east',split:true,tools:'#excutingCodeTool'" title="Code" style="overflow: hidden;width: 30%;height:100%; border: 0px; padding: 0px; margin: 0px;">
+        <textarea id="executingCodeTextArea" style="width:100%;height:100%; background-color: #272822; border: 0px; padding: 0px; margin: 0px; "></textarea>
     </div>
-    <div data-options="region:'center'" style="width:75%;height:100%; overflow: hidden; border: 0px; padding: 0px; margin: 0px;">
+    <div data-options="region:'center'" style="height:100%; overflow: hidden; border: 0px; padding: 0px; margin: 0px;">
         <div class="easyui-layout" data-options="" style="width:100%;height:100%;overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px;">
-            <div id="webGLDiv" data-options="region:'center',tools:'#webGLDivTool'" title="WebGLs" style="width: 100%;height:80%; overflow: hidden;background-color: #272822; border: 0px; padding: 0px; margin: 0px;">
-                <div id="WebGLTabs" class="easyui-tabs" data-options="tools:'#addWebGLDiv',border:false" style="overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px; width: 100%; height: 100%;">
-                    <div title="WebGL1" data-options="closable:true" style="width: 100%; height: 100%; overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px;">
-                        <canvas id="WebGL1" style="width:100%; height: 100%;overflow: hidden; background-color: #272822;border:0px;padding:0px;margin:0px;"></canvas>
-                    </div>
-                    <div title="WebGL2" data-options="closable:true" style="width: 100%; height: 100%; overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px;">
-                        <canvas id="WebGL2" style="width:100%; height: 100%;overflow: hidden; background-color: #272822;border:0px;padding:0px;margin:0px;"></canvas>
-                    </div>
-                    <div title="WebGL3" data-options="closable:true" style="width: 100%; height: 100%; overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px;">
-                        <canvas id="WebGL3" style="width:100%; height: 100%;overflow: hidden; background-color: #272822;border:0px;padding:0px;margin:0px;"></canvas>
-                    </div>
-                    <div title="WebGL4" data-options="closable:true" style="width: 100%; height: 100%; overflow: hidden; background-color: #272822; border: 0px; padding: 0px; margin: 0px;">
-                        <canvas id="WebGL4" style="width:100%; height: 100%;overflow: hidden; background-color: #272822;border:0px;padding:0px;margin:0px;"></canvas>
-                    </div>
-                </div>
+            <div id="webGLDiv" data-options="region:'center'" title="WebGL" style="width: 60%;height:100%; overflow: hidden;background-color: #272822; border: 0px; padding: 0px; margin: 0px;">
+                <canvas id="WebGL" style="width:100%; height: 100%;overflow: hidden; background-color: #272822;border:0px;padding:0px;margin:0px;"></canvas>
             </div>
-            <div data-options="region:'south',split:true,tools:[{iconCls:'icon-clear001',handler:function(){clearErrorInformation();}}]" title="输出信息" style="width: 100%; height: 20%; overflow: hidden; border: 0px; padding: 0px; margin: 0px;">
+            <div data-options="region:'east'" style="width: 40%; height: 100%; overflow: hidden; border: 0px; padding: 0px; margin: 0px;">
+				<div class="easyui-panel" title="VertexShader" style="width:100%;height:50%; background-color: #272822; border: 0px; padding: 0px; margin: 0px; ">
+					<textarea id="vertexShaderTextArea" style="width:100%;height:100%; background-color: #272822; border: 0px; padding: 0px; margin: 0px; "></textarea>
+				</div>
+				<div class="easyui-panel" title="FragmentShader" style="width:100%;height:50%; background-color: #272822; border: 0px; padding: 0px; margin: 0px; ">
+					<textarea id="fragmentShaderTextArea" style="width:100%;height:100%; background-color: #272822; border: 0px; padding: 0px; margin: 0px; "></textarea>
+				</div>
+            </div>
+            <div data-options="region:'south',split:true,tools:[{iconCls:'icon-clear001',handler:function(){clearErrorInformation();}}]" title="Information" style="width: 100%; height: 20%; overflow: hidden; border: 0px; padding: 0px; margin: 0px;">
                 <textarea id="errorInformation" readonly="readonly" style="overflow: auto; background-color: #272822; color: white; width: 100%; height: 100%; border: 0px; padding: 0px; margin: 0px;"></textarea>
             </div>
         </div>
     </div>
-
-    <div id="webGLDivTool" style="border: 0px; padding: 0px; margin: 0px;">
-        <a href="#" style="width:90px;height:16px" class="easyui-linkbutton" onclick="fullScreen();">全屏</a>
-    </div>
     <div id="excutingCodeTool" style="border: 0px; padding: 0px; margin: 0px;">
      	<input id="cc" style="width:200px;height:16px" name="testCode">
-        <a href="#" style="width:40px;height:16px" class="easyui-linkbutton" onclick="executeText()">执行</a>
-        <a href="#" style="width:40px;height:16px" class="easyui-linkbutton" onclick="window.open('WebGL/help.htm')">帮助</a>
-    </div>
-    <div id="addWebGLDiv" data-options="" style="padding:0px;margin:0px; height:auto;width:auto">
-        <a href="#" style="width:auto;height:26px; border:0px; padding: 0px; margin: 0px;" class="easyui-linkbutton" onclick="addWebGL()">添加WebGL</a>
-        <a href="#" style="width: auto; height:26px; border:0px; padding: 0px; margin: 0px; " class="easyui-linkbutton" onclick="deleteAllWebGLs()">删除所有WebGLs</a>
+        <a href="#" style="width:40px;height:16px" class="easyui-linkbutton" onclick="executeText()">Go</a>
+        <a href="#" style="width:40px;height:16px" class="easyui-linkbutton" onclick="window.open('WebGL/help.htm')">Help</a>
     </div>
 </body>
 </html>
