@@ -11,6 +11,8 @@
     <script src="CodeMirror/lib/codemirror.js"></script>
     <script src="CodeMirror/mode/javascript.js"></script>
     <script type="text/javascript" src="gl-matrix-min.js"></script>
+    <script type="text/javascript" src="Oak3D_v_0_5.js"></script>
+    <script type="text/javascript" src="webgl-utils.js"></script>
     <script type="text/javascript" src="jquery-easyui-1.4.4/jquery.min.js"></script>
     <script type="text/javascript" src="jquery-easyui-1.4.4/jquery.easyui.min.js"></script>
     <script type="text/javascript" src="jquery-easyui-1.4.4/locale/easyui-lang-zh_CN.js"></script>
@@ -52,15 +54,27 @@
 	                {
 	                	key:'三角形和矩形',
 	                	value:'三角形和矩形'
-	                }
+	                },
+                    {
+                        key:'带颜色的三角形和矩形',
+                        value:'带颜色的三角形和矩形'
+                    },
+                    {
+                        key:'能动的三角形和矩形',
+                        value:'能动的三角形和矩形'
+                    },
+                    {
+                        key:'金字塔和立方体',
+                        value:'金字塔和立方体'
+                    }
                 ],
                 editable: false,
                 onSelect: function (result) {
                 	try{
-                		$.get("WebGL/"+result.value+"_vs.glsl",function(data){
+                		$.get("WebGL/"+result.value+"/vs.glsl",function(data){
                 			myVertexShaderTextArea.setValue(data);
                 		});
-                		$.get("WebGL/"+result.value+"_fs.glsl",function(data){
+                		$.get("WebGL/"+result.value+"/fs.glsl",function(data){
                 			myFragmentShaderTextArea.setValue(data);
                 		});
                 	}catch(error){
@@ -71,7 +85,7 @@
 	                    "错误堆栈：" + error.stack;
 	                	addErrorInformation(errorInformation);
                 	}
-                	$.get("WebGL/"+result.value+".js", function (data3) {
+                	$.get("WebGL/"+result.value+"/main.js", function (data3) {
                         myExecutingCodeTextArea.setValue(data3);
                     });
                 }
